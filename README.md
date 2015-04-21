@@ -4,6 +4,7 @@ collection-cache
 > Simple request data caching.
 
 [![npm](https://img.shields.io/npm/v/collection-cache.svg)](https://www.npmjs.com/package/collection-cache)
+[![bower](https://img.shields.io/bower/v/collection-cache.svg)](https://github.com/mariusc23/collection-cache)
 [![build status](https://travis-ci.org/mariusc23/collection-cache.svg)](https://travis-ci.org/mariusc23/collection-cache)
 
 ## Getting Started
