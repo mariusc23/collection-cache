@@ -1,0 +1,29 @@
+{
+  "name": "collection-cache",
+  "main": "index.js",
+  "version": "1.0.0",
+  "authors": [
+    "Marius Craciunoiu (http://www.mariusc23.com/)"
+  ],
+  "description": "Simple request data caching.",
+  "moduleType": [
+    "amd",
+    "node"
+  ],
+  "keywords": [
+    "cache",
+    "request",
+    "ajax"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "lodash": "~3.7.0"
+  }
+}

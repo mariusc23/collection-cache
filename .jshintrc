@@ -1,0 +1,25 @@
+{
+  "browser": true,
+  "eqeqeq": true,
+  "esnext": true,
+  "forin": false,
+  "immed": true,
+  "indent": 2,
+  "maxerr": 100,
+  "newcap": true,
+  "node": true,
+  "noarg": true,
+  "passfail": false,
+  "quotmark": "single",
+  "undef": true,
+  "unused": true,
+  "white": false,
+  "shadow": false,
+  "supernew": false,
+  "predef": [
+    "exports",
+    "require",
+    "define",
+    "process"
+  ]
+}
