@@ -23,6 +23,7 @@
     "nodeunit": "^0.9.1"
   },
   "dependencies": {
+    "es6-promise": "^2.1.0",
     "lodash": "^3.7.0"
   }
 }

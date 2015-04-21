@@ -4,24 +4,22 @@
   // UMD
   // https://github.com/umdjs/umd/blob/master/returnExports.js
   if (typeof define === 'function' && define.amd) {
-    define(['lodash'], factory);
+    define(['lodash', 'es6-promise'], factory);
   }
   else if (typeof exports === 'object') {
-    module.exports = factory(require('lodash'));
+    module.exports = factory(require('lodash'), require('es6-promise').Promise);
   }
   else {
-    root.CollectionCache = factory(root._);
+    root.CollectionCache = factory(root._, root.ES6Promise);
   }
 
-}(this, function (_) {
+}(this, function (_, Promise) {
   'use strict';
 
   /**
    * Creates new cache instance.
    * @class CollectionCache
    *
-   * @example
-   * var cache = new CollectionCache();
    * @param   {Object}  options           - Collection options.
    * @param   {String}  options.skipKey   - Key representing start index.
    * @param   {String}  options.limitKey  - Key representing length of requested data.
@@ -37,83 +35,71 @@
   /**
    * Gets data from cache.
    *
-   * @example
-   * var result = cache.get({
-   *   skip: 10,
-   *   limit: 10
-   * });
-   * @param  {Object}    options                           - Request options. Separate cache is used for each unique set of options.
-   * @param  {Number}    options.skip                      - Start index of requested data.
-   * @param  {Number}    options.limit                     - Length of requested data. `(endIndex - startIndex)`
-   * @param  {CollectionCache~fallbackCallback}  callback  - Callback accepting two parameters: `cb(err, data)`
-   * @returns                                              - Callback result.
+   * @param  {Object}    options        - Request options. Separate cache is used for each unique set of options.
+   * @param  {Number}    options.skip   - Start index of requested data.
+   * @param  {Number}    options.limit  - Length of requested data. `(endIndex - startIndex)`
+   * @returns                           - Promise.
    * @memberof CollectionCache
    */
-  CollectionCache.prototype.get = function(options, callback) {
-    return setTimeout(function() {
-      return CollectionCache.prototype.getSync.call(this, options, callback);
+  CollectionCache.prototype.get = function(options) {
+    return new Promise(function(resolve) {
+      CollectionCache.prototype.getSync.call(this, options, resolve);
     }.bind(this));
   };
 
-  CollectionCache.prototype.getSync = function(options, callback) {
+  CollectionCache.prototype.getSync = function(options, resolve) {
     var cacheKey = getCacheKey.call(this, options),
         start = options[this.skipKey] || 0,
         end = (options[this.skipKey] + options[this.limitKey]) || undefined,
         data = [];
 
     if (this.cache[cacheKey]) {
-      data = toArray(this.cache[cacheKey].data);
+      data = toArray(this.cache[cacheKey].data).slice(start, end);
     }
 
-    if (!callback) {
-      callback = fallbackCallback;
+    if (resolve) {
+      resolve(data);
     }
 
-    return callback.call(this, undefined, data.slice(start, end));
+    return data;
   };
 
   /**
    * Gets all data from cache. Same as `.get()`, but returning all available data.
    * @memberof CollectionCache
    */
-  CollectionCache.prototype.all = function(options, callback) {
-    return setTimeout(function() {
-      return CollectionCache.prototype.allSync.call(this, options, callback);
+  CollectionCache.prototype.all = function(options) {
+    return new Promise(function(resolve) {
+      CollectionCache.prototype.allSync.call(this, options, resolve);
     }.bind(this));
   };
 
-  CollectionCache.prototype.allSync = function(options, callback) {
+  CollectionCache.prototype.allSync = function(options, resolve) {
     var unlimit = {};
     unlimit[this.skipKey] = 0;
     unlimit[this.limitKey] = undefined;
-    return this.getSync.call(this, _.extend({}, options, unlimit), callback);
+    return this.getSync.call(this, _.extend({}, options, unlimit), resolve);
   };
 
   /**
    * Add data to cache.
    *
-   * @example
-   * cache.add({
-   *   skip: 10,
-   *   limit: 10,
-   * }, [1, 2], function(err, data) {
-   *   if (err) { return console.error(err); }
-   *   console.log(data);
-   * });
    * @param  {Object}    options   - Options.
    * @param  {Object}    data      - Data to append to cache.
-   * @param  {Function}  callback  - Callback accepting two parameters: `cb(err, data)`
+   * @returns                      - Promise.
    * @memberof CollectionCache
    */
-  CollectionCache.prototype.add = function(options, data, callback) {
-    return setTimeout(function() {
-      return CollectionCache.prototype.addSync.call(this, options, data, callback);
+  CollectionCache.prototype.add = function(options, data) {
+    return new Promise(function(resolve, reject) {
+      CollectionCache.prototype.addSync.call(this, options, data, resolve, reject);
     }.bind(this));
   };
 
-  CollectionCache.prototype.addSync = function(options, data, callback) {
+  CollectionCache.prototype.addSync = function(options, data, resolve, reject) {
     if (!Array.isArray(data)) {
-      return callback.call(this, new Error('Data must be an array.'), []);
+      var err = new Error('Data must be an array.');
+      if (reject) { reject(err); }
+      return err;
     }
 
     options = _.extend({
@@ -137,11 +123,11 @@
       this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
     }
 
-    if (!callback) {
-      callback = fallbackCallback;
+    if (resolve) {
+      resolve(data);
     }
 
-    return callback.call(this, undefined, toArray(this.cache[cacheKey].data).slice(options[this.skipKey], options[this.limitKey]));
+    return data;
   };
 
   // Utils
@@ -186,19 +172,6 @@
       result[i] = obj[i];
     }
 
-    return result;
-  }
-
-  /**
-   * Returns data if no callback specified. Defined once to save memory.
-   *
-   * @callback CollectionCache~fallbackCallback
-   * @param  {Object}  err     - Error object.
-   * @param  {Object}  result  - Resulting array.
-   * @return {Array}
-   * @private
-   */
-  function fallbackCallback(err, result) {
     return result;
   }
 
