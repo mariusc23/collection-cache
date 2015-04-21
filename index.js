@@ -51,21 +51,25 @@
    */
   CollectionCache.prototype.get = function(options, callback) {
     return setTimeout(function() {
-      var cacheKey = getCacheKey.call(this, options),
-          start = options[this.skipKey] || 0,
-          end = (options[this.skipKey] + options[this.limitKey]) || undefined,
-          data = [];
-
-      if (this.cache[cacheKey]) {
-        data = toArray(this.cache[cacheKey].data);
-      }
-
-      if (!callback) {
-        callback = fallbackCallback;
-      }
-
-      return callback.call(this, undefined, data.slice(start, end));
+      return CollectionCache.prototype.getSync.call(this, options, callback);
     }.bind(this));
+  };
+
+  CollectionCache.prototype.getSync = function(options, callback) {
+    var cacheKey = getCacheKey.call(this, options),
+        start = options[this.skipKey] || 0,
+        end = (options[this.skipKey] + options[this.limitKey]) || undefined,
+        data = [];
+
+    if (this.cache[cacheKey]) {
+      data = toArray(this.cache[cacheKey].data);
+    }
+
+    if (!callback) {
+      callback = fallbackCallback;
+    }
+
+    return callback.call(this, undefined, data.slice(start, end));
   };
 
   /**
@@ -73,10 +77,16 @@
    * @memberof CollectionCache
    */
   CollectionCache.prototype.all = function(options, callback) {
+    return setTimeout(function() {
+      return CollectionCache.prototype.allSync.call(this, options, callback);
+    }.bind(this));
+  };
+
+  CollectionCache.prototype.allSync = function(options, callback) {
     var unlimit = {};
     unlimit[this.skipKey] = 0;
     unlimit[this.limitKey] = undefined;
-    return this.get.call(this, _.extend({}, options, unlimit), callback);
+    return this.getSync.call(this, _.extend({}, options, unlimit), callback);
   };
 
   /**
@@ -97,33 +107,41 @@
    */
   CollectionCache.prototype.add = function(options, data, callback) {
     return setTimeout(function() {
-      if (!Array.isArray(data)) {
-        return callback.call(this, new Error('Data must be an array.'), []);
-      }
-
-      options = _.extend({
-        skip: 0
-      }, options);
-
-      var cacheKey = getCacheKey.call(this, options),
-          i;
-
-      if (!this.cache[cacheKey]) {
-        this.cache[cacheKey] = {
-          data: {}
-        };
-      }
-
-      if (options.skip > this.cache[cacheKey].data.length + 1) {
-        console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
-      }
-
-      for (i = 0; i < data.length; i++) {
-        this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
-      }
-
-      return callback.call(this, undefined, toArray(this.cache[cacheKey].data).slice(options[this.skipKey], options[this.limitKey]));
+      return CollectionCache.prototype.addSync.call(this, options, data, callback);
     }.bind(this));
+  };
+
+  CollectionCache.prototype.addSync = function(options, data, callback) {
+    if (!Array.isArray(data)) {
+      return callback.call(this, new Error('Data must be an array.'), []);
+    }
+
+    options = _.extend({
+      skip: 0
+    }, options);
+
+    var cacheKey = getCacheKey.call(this, options),
+        i;
+
+    if (!this.cache[cacheKey]) {
+      this.cache[cacheKey] = {
+        data: {}
+      };
+    }
+
+    if (options.skip > this.cache[cacheKey].data.length + 1) {
+      console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
+    }
+
+    for (i = 0; i < data.length; i++) {
+      this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
+    }
+
+    if (!callback) {
+      callback = fallbackCallback;
+    }
+
+    return callback.call(this, undefined, toArray(this.cache[cacheKey].data).slice(options[this.skipKey], options[this.limitKey]));
   };
 
   // Utils

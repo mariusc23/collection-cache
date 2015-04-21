@@ -26,7 +26,9 @@ module.exports = {
   },
 
   addNoOptions: function (test) {
-    test.expect(1);
+    test.expect(2);
+
+    test.equal(this.cache.addSync({ a:0 }, [1, 2, 3]).length, 3, '[sync] Added 3 items');
 
     this.cache.add({}, [1, 2, 3], function(err, result) {
       test.equal(result.length, 3, 'Added 3 items.');
@@ -83,9 +85,11 @@ module.exports = {
   },
 
   get: function(test) {
-    test.expect(2);
+    test.expect(3);
 
     this.cache.add({}, [1, 2, 3], function(err, result) {
+
+      test.equal(this.cache.getSync({}).length, 3, '[sync] Returns everything.');
 
       this.cache.get({}, function(err, result) {
         test.equal(result.length, 3, 'Returns everything.');
