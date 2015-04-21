@@ -50,20 +50,22 @@
    * @memberof CollectionCache
    */
   CollectionCache.prototype.get = function(options, callback) {
-    var cacheKey = getCacheKey.call(this, options),
-        start = options[this.skipKey] || 0,
-        end = (options[this.skipKey] + options[this.limitKey]) || undefined,
-        data = [];
+    return setTimeout(function() {
+      var cacheKey = getCacheKey.call(this, options),
+          start = options[this.skipKey] || 0,
+          end = (options[this.skipKey] + options[this.limitKey]) || undefined,
+          data = [];
 
-    if (this.cache[cacheKey]) {
-      data = toArray(this.cache[cacheKey].data);
-    }
+      if (this.cache[cacheKey]) {
+        data = toArray(this.cache[cacheKey].data);
+      }
 
-    if (!callback) {
-      callback = fallbackCallback;
-    }
+      if (!callback) {
+        callback = fallbackCallback;
+      }
 
-    return callback.call(this, undefined, data.slice(start, end));
+      return callback.call(this, undefined, data.slice(start, end));
+    }.bind(this));
   };
 
   /**
@@ -94,32 +96,34 @@
    * @memberof CollectionCache
    */
   CollectionCache.prototype.add = function(options, data, callback) {
-    if (!Array.isArray(data)) {
-      return callback.call(this, new Error('Data must be an array.'), []);
-    }
+    return setTimeout(function() {
+      if (!Array.isArray(data)) {
+        return callback.call(this, new Error('Data must be an array.'), []);
+      }
 
-    options = _.extend({
-      skip: 0
-    }, options);
+      options = _.extend({
+        skip: 0
+      }, options);
 
-    var cacheKey = getCacheKey.call(this, options),
-        i;
+      var cacheKey = getCacheKey.call(this, options),
+          i;
 
-    if (!this.cache[cacheKey]) {
-      this.cache[cacheKey] = {
-        data: {}
-      };
-    }
+      if (!this.cache[cacheKey]) {
+        this.cache[cacheKey] = {
+          data: {}
+        };
+      }
 
-    if (options.skip > this.cache[cacheKey].data.length + 1) {
-      console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
-    }
+      if (options.skip > this.cache[cacheKey].data.length + 1) {
+        console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
+      }
 
-    for (i = 0; i < data.length; i++) {
-      this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
-    }
+      for (i = 0; i < data.length; i++) {
+        this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
+      }
 
-    return callback.call(this, undefined, toArray(this.cache[cacheKey].data).slice(options[this.skipKey], options[this.limitKey]));
+      return callback.call(this, undefined, toArray(this.cache[cacheKey].data).slice(options[this.skipKey], options[this.limitKey]));
+    }.bind(this));
   };
 
   // Utils

@@ -53,9 +53,7 @@ var deferred = $.Deferred();
 fruits.get(queryParams, function(err, cachedFruits) {
   // If cached, return cached version
   if (cachedFruits.length) {
-    setTimeout(function() {
-      deferred.resolve(cachedFruits);
-    });
+    deferred.resolve(cachedFruits);
   }
   // Otherwise, fetch from backend
   else {
