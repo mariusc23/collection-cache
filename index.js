@@ -43,25 +43,17 @@
    */
   CollectionCache.prototype.get = function(options) {
     return new Promise(function(resolve) {
-      CollectionCache.prototype.getSync.call(this, options, resolve);
+      var cacheKey = getCacheKey.call(this, options),
+          start = options[this.skipKey] || 0,
+          end = (options[this.skipKey] + options[this.limitKey]) || undefined,
+          data = [];
+
+      if (this.cache[cacheKey]) {
+        data = toArray(this.cache[cacheKey].data).slice(start, end);
+      }
+
+      return resolve(data);
     }.bind(this));
-  };
-
-  CollectionCache.prototype.getSync = function(options, resolve) {
-    var cacheKey = getCacheKey.call(this, options),
-        start = options[this.skipKey] || 0,
-        end = (options[this.skipKey] + options[this.limitKey]) || undefined,
-        data = [];
-
-    if (this.cache[cacheKey]) {
-      data = toArray(this.cache[cacheKey].data).slice(start, end);
-    }
-
-    if (resolve) {
-      resolve(data);
-    }
-
-    return data;
   };
 
   /**
@@ -69,16 +61,10 @@
    * @memberof CollectionCache
    */
   CollectionCache.prototype.all = function(options) {
-    return new Promise(function(resolve) {
-      CollectionCache.prototype.allSync.call(this, options, resolve);
-    }.bind(this));
-  };
-
-  CollectionCache.prototype.allSync = function(options, resolve) {
     var unlimit = {};
     unlimit[this.skipKey] = 0;
     unlimit[this.limitKey] = undefined;
-    return this.getSync.call(this, _.extend({}, options, unlimit), resolve);
+    return CollectionCache.prototype.get.call(this, _.extend({}, options, unlimit));
   };
 
   /**
@@ -91,51 +77,41 @@
    */
   CollectionCache.prototype.add = function(options, data) {
     return new Promise(function(resolve, reject) {
-      CollectionCache.prototype.addSync.call(this, options, data, resolve, reject);
+      if (!Array.isArray(data)) {
+        var err = new Error('Data must be an array.');
+        if (reject) { reject(err); }
+        return err;
+      }
+
+      options = _.extend({
+        skip: 0
+      }, options);
+
+      var cacheKey = getCacheKey.call(this, options),
+          i;
+
+      if (!this.cache[cacheKey]) {
+        this.cache[cacheKey] = {
+          data: {}
+        };
+      }
+
+      if (options.skip > this.cache[cacheKey].data.length + 1) {
+        console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
+      }
+
+      for (i = 0; i < data.length; i++) {
+        this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
+      }
+
+      return resolve(data);
     }.bind(this));
-  };
-
-  CollectionCache.prototype.addSync = function(options, data, resolve, reject) {
-    if (!Array.isArray(data)) {
-      var err = new Error('Data must be an array.');
-      if (reject) { reject(err); }
-      return err;
-    }
-
-    options = _.extend({
-      skip: 0
-    }, options);
-
-    var cacheKey = getCacheKey.call(this, options),
-        i;
-
-    if (!this.cache[cacheKey]) {
-      this.cache[cacheKey] = {
-        data: {}
-      };
-    }
-
-    if (options.skip > this.cache[cacheKey].data.length + 1) {
-      console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
-    }
-
-    for (i = 0; i < data.length; i++) {
-      this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
-    }
-
-    if (resolve) {
-      resolve(data);
-    }
-
-    return data;
   };
 
   // Utils
   /**
    * Converts options to hash key.
    *
-   * @example
-   * getCacheKey({});
    * @param  {Object}  options  - Object to create hash from.
    * @private
    */
