@@ -24,53 +24,38 @@ var queryParams = {
 };
 ```
 
-#### Add items to cache
-```js
-fruits.add(queryParams, ['apples', 'oranges'], function(err, cachedFruits) {
-  if (err) { throw err; }
-  console.log(cachedFruits);
-});
-
-// or shorthand
-var cachedFruits = fruits.add(queryParams, ['apples', 'oranges']);
-```
-
-#### Get items from cache
-```js
-fruits.get(queryParams, function(err, cachedFruits) {
-  if (err) { throw err; }
-  console.log(cachedFruits);
-});
-
-// or shorthand
-var cachedFruits = fruits.get(queryParams);
-```
-
-#### All together now
+#### Querying and Updating
 ```js
 var deferred = $.Deferred();
 
-// Check if already cached
-fruits.get(queryParams, function(err, cachedFruits) {
-  // If cached, return cached version
-  if (cachedFruits.length) {
+fruits.get(
+  queryParams,
+  function(err, cachedFruits) {
     deferred.resolve(cachedFruits);
-  }
-  // Otherwise, fetch from backend
-  else {
+  },
+  function(addToCache) {
     $http({
       url: '/fruits',
       method: 'GET',
       params: queryParams
     }).success(function(newFruits) {
-      // And cache response
-      fruits.add(queryParams, newFruits);
+      addToCache(newFruits);
       deferred.resolve(newFruits);
     });
   }
-});
+);
 
 return deferred.promise;
+```
+
+#### Synchronous Updates
+```js
+fruits.add(queryParams, ['apples', 'oranges']);
+```
+
+#### Synchronous Retrievals
+```js
+var cachedFruits = fruits.get(queryParams);
 ```
 
 ## License
