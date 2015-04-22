@@ -1,4 +1,5 @@
 var CollectionCache = require('../index');
+var async = require('async');
 var _ = require('lodash');
 
 module.exports = {
@@ -25,77 +26,59 @@ module.exports = {
     test.done();
   },
 
-  addNoOptions: function (test) {
-    test.expect(1);
+  queue: function (test) {
+    test.expect(7);
 
-    this.cache.add({}, [1, 2, 3]).then(function(result) {
-      test.equal(result.length, 3, 'Added 3 items.');
+    var cache = this.cache;
+    var options = {};
+    var count = 0;
+
+    async.each([1, 2, 3, 4, 5], function(count, next) {
+      count++;
+      cache.get(
+        options,
+        function(err, data) {
+          if (count <= 3) {
+            test.equal(data.toString(), '1,2,3', 'Got initial data.');
+          }
+          else {
+            test.equal(data.toString(), '4,5,6', 'Got modified data.');
+          }
+          if (count === 3) {
+            test.equal(cache.add(options, [4, 5, 6]).toString(), '4,5,6', 'Changed data.');
+          }
+          next();
+        },
+        function(addToCache) {
+          setTimeout(function() {
+            addToCache([1, 2, 3]);
+          }, 0);
+        }
+      );
+    }, function(err) {
+      cache.add(options, [7, 8, 9]);
+      cache.get(options, function(err, data) {
+        test.equal(data.toString(), '7,8,9', 'Got final data');
+      });
       test.done();
     });
   },
 
-  addSparse: function (test) {
-    test.expect(4);
+  sync: function(test) {
+    test.expect(5);
 
-    this.cache.add({ skip: 10 }, [1, 2, 3]).then(function(result) {
-      test.equal(result.length, 3, 'Returns the 3 added items.');
-      test.equal(result[result.length - 1], 3, 'Last item is correct.');
+    var options = {};
+    var modifiedOptions = { skip: 2 };
 
-      this.cache.all({}).then(function(result) {
-        test.equal(result.length, 13, 'Array contains empty indices.');
-        test.equal(result[0], undefined, 'Array has undefined for empty index.');
-        test.done();
-      });
-    }.bind(this));
-  },
+    test.equal(this.cache.add(options, [1, 2, 3]).toString(), '1,2,3', 'Added sync data.');
+    test.equal(this.cache.get(options).toString(), '1,2,3', 'Got sync data.');
 
-  edit: function (test) {
-    test.expect(4);
+    test.equal(this.cache.add(modifiedOptions, [4, 5, 6]).toString(), '4,5,6', 'Modified sync data.');
+    test.equal(this.cache.get(modifiedOptions).toString(), '4,5,6', 'Got modified sync data.');
 
-    this.cache.add({}, [1, 2, 3]).then(function(result) {
-      test.equal(result.length, 3, 'Has 3 items.');
-      test.equal(result[2], 3, 'Last item is 3.');
+    test.equal(this.cache.all(modifiedOptions).toString(), '1,2,4,5,6', 'Got all sync data.');
 
-      this.cache.add({ skip: 2 }, [4]).then(function(result) {
-        test.equal(result.length, 1, 'Returns modified item.');
-        test.equal(result[0], 4, 'Value modified.');
-        test.done();
-      });
-    }.bind(this));
-  },
-
-  editSparse: function (test) {
-    test.expect(4);
-
-    this.cache.add({}, [1, 2, 3]).then(function(result) {
-      test.equal(result.length, 3, 'Has 3 items.');
-      test.equal(result[2], 3, 'Last item is 3.');
-
-      this.cache.add({ skip: 9 }, [4]).then(function(result) {
-        test.equal(result[0], 4, 'Value added.');
-
-        this.cache.all({}).then(function(result) {
-          test.equal(result.length, 10, 'Has 10 items.');
-          test.done();
-        });
-      }.bind(this));
-    }.bind(this));
-  },
-
-  get: function(test) {
-    test.expect(2);
-
-    this.cache.add({}, [1, 2, 3]).then(function(result) {
-
-      this.cache.get({}).then(function(result) {
-        test.equal(result.length, 3, 'Returns everything.');
-
-        this.cache.get({ skip: 1, limit: 1 }).then(function(result) {
-          test.equal(result.length, 1, 'Returns only skip and limit range.');
-          test.done();
-        });
-      }.bind(this));
-    }.bind(this));
+    test.done();
   }
 
 };

@@ -1,7 +1,7 @@
 {
   "name": "collection-cache",
   "main": "index.js",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "authors": [
     "Marius Craciunoiu (http://www.mariusc23.com/)"
   ],
