@@ -21,27 +21,30 @@
    * @class CollectionCache
    *
    * @param   {Object}  options           - Collection options.
+   * @param   {String}  options.idKey     - Key representing item id.
    * @param   {String}  options.skipKey   - Key representing start index.
    * @param   {String}  options.limitKey  - Key representing length of requested data.
    * @returns {Object}                    - New cache instance.
    */
   function CollectionCache(options) {
     options = options || {};
-    this.cache = {};
+    this.cache = [];
     this.queue = {};
+    this.items = {};
+    this.idKey = options.idKey || 'id';
     this.skipKey = options.skipKey || 'skip';
     this.limitKey = options.limitKey || 'limit';
   }
 
   /**
-   * Gets data from cache.
+   * Gets items from cache.
    *
    * @param  {Object}    options        - Request options. Separate cache is used for each unique set of options.
    * @param  {Number}    options.skip   - Start index of requested data.
    * @param  {Number}    options.limit  - Length of requested data. `(endIndex - startIndex)`
    * @param  {Function}  callback       - Callback to be invoked when data is retrieved.
    * @param  {Function}  getter         - Callback to be invoked when data needs to be retrieved.
-   * @returns - Cached data (only if available).
+   * @returns - Cached data (only if available and returned by callback).
    * @memberof CollectionCache
    */
   CollectionCache.prototype.get = function(options, callback, getter) {
@@ -57,7 +60,7 @@
 
     // Cached
     if (this.cache[cacheKey]) {
-      return callback(undefined, toArray(this.cache[cacheKey].data).slice(start, end));
+      return callback(undefined, this.cache[cacheKey].slice(start, end));
     }
     // Not cached: first request
     else if (!this.queue[queueKey]) {
@@ -76,7 +79,7 @@
     // Not cached: first and subsequent response
     this.queue[queueKey]
       .then(function(/* data */) {
-        callback(undefined, toArray(this.cache[cacheKey].data).slice(start, end));
+        callback(undefined, this.cache[cacheKey].slice(start, end));
       }.bind(this))
       .catch(function(err) {
         // console.error(err);
@@ -86,6 +89,7 @@
 
   /**
    * Gets all data from cache. Same as `.get()`, but returning all available data.
+   *
    * @memberof CollectionCache
    */
   CollectionCache.prototype.all = function(options, callback, getter) {
@@ -96,7 +100,7 @@
   };
 
   /**
-   * Add data to cache.
+   * Create/add data to cache area.
    *
    * @param  {Object}  options  - Options.
    * @param  {Array}   data     - Data to add.
@@ -116,20 +120,46 @@
         i;
 
     if (!this.cache[cacheKey]) {
-      this.cache[cacheKey] = {
-        data: {}
-      };
+      this.cache[cacheKey] = [];
     }
 
-    if (options.skip > this.cache[cacheKey].data.length + 1) {
+    if (options.skip > this.cache[cacheKey].length + 1) {
       console.warn('Sparse cache area detected. Skip must be less than or equal to cache length.');
     }
 
     for (i = 0; i < data.length; i++) {
-      this.cache[cacheKey].data[options[this.skipKey] + i] = data[i];
+      this.cache[cacheKey][options[this.skipKey] + i] = this.items[data[i][this.idKey]] = data[i];
     }
 
     return data;
+  };
+
+  /**
+   * Retrieve cached item.
+   *
+   * @param  {String}        id    - Id of item.
+   * @memberof CollectionCache
+   */
+  CollectionCache.prototype.show = function(id) {
+    return this.items[id];
+  };
+
+  /**
+   * Update cached item in all cache areas.
+   *
+   * @param  {String}        id    - Id of item.
+   * @param  {Object|Array}  data  - Data to update/replace.
+   * @memberof CollectionCache
+   */
+  CollectionCache.prototype.update = function(id, data) {
+    // TODO: emit events?
+    if (Array.isArray(data)) {
+      this.items[id] = data;
+    }
+    else {
+      this.items[id] = _.extend(this.items[id] || {}, data);
+    }
+    return this.items[id];
   };
 
   /**
@@ -138,8 +168,9 @@
    * @memberof CollectionCache
    */
   CollectionCache.prototype.destroy = function() {
-    this.cache = {};
+    this.cache = [];
     this.queue = {};
+    this.items = {};
   };
 
   /**
@@ -151,17 +182,18 @@
   function getCacheKey(options) {
     /*jshint validthis:true */
     var result = '';
-    return _.forOwn(
+    _.forOwn(
       _.defaults(
         {
           __CACHE__: '__CACHE__' // If no options except skip & limit.
         },
-        _.without(options, [this.skipKey, this.limitKey])
+        _.omit(options, [this.skipKey, this.limitKey])
       ),
       function(option, key) {
         result += key + '=' + option;
       }
     );
+    return result;
   }
 
   /**
@@ -172,7 +204,7 @@
    */
   function getQueueKey(options) {
     var result = '';
-    return _.forOwn(
+    _.forOwn(
       _.defaults(
         {
           __CACHE__: '__CACHE__' // If no options except skip & limit.
@@ -183,25 +215,6 @@
         result += key + '=' + option;
       }
     );
-  }
-
-  /**
-   * Converts object to array while keeping indexes accurate.
-   *
-   * @param  {Object}  obj  - Object to iterate over.
-   * @return {Array}
-   * @private
-   */
-  function toArray(obj) {
-    var result = [],
-        keys =_.keys(obj), // TODO: should sort?
-        length = keys[keys.length - 1],
-        i = -1;
-
-    while (i++ < length) {
-      result[i] = obj[i];
-    }
-
     return result;
   }
 

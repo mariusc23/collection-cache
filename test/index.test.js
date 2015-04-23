@@ -12,7 +12,7 @@ module.exports = {
   },
 
   tearDown: function (done) {
-    this.cache = new CollectionCache();
+    this.cache.destroy();
     done();
   },
 
@@ -79,6 +79,70 @@ module.exports = {
     test.equal(this.cache.all(modifiedOptions).toString(), '1,2,4,5,6', 'Got all sync data.');
 
     test.done();
-  }
+  },
+
+  update: function(test) {
+    test.expect(2);
+
+    var item = {
+      id: 'cache',
+      a: 'a'
+    };
+
+    test.equal(
+      JSON.stringify(this.cache.update(item.id, item)),
+      JSON.stringify(item),
+      'Updated item.'
+    );
+
+    test.equal(
+      JSON.stringify(this.cache.show(item.id)),
+      JSON.stringify(item),
+      'Showed item.'
+    );
+
+    test.done();
+  },
+
+  existing: function(test) {
+    test.expect(2);
+
+    var options = {};
+    var options2 = { z: 'z' };
+
+    var item = {
+      id: '1',
+      a: 'a'
+    };
+
+    var item2 = {
+      id: '2',
+      b: 'b'
+    };
+
+    var item3 = {
+      id: '3',
+      c: 'c'
+    };
+
+    this.cache.add(options, [item, item2]);
+    this.cache.add(options2, [item2, item]);
+
+    this.cache.update(item2.id, item3);
+
+    test.equal(
+      JSON.stringify(this.cache.get(options)[1]),
+      JSON.stringify(_.extend({}, item2, item3)),
+      'Updated item in first cache area.'
+    );
+
+    test.equal(
+      JSON.stringify(this.cache.get(options2)[0]),
+      JSON.stringify(_.extend({}, item2, item3)),
+      'Updated item in second cache area.'
+    );
+
+    test.done();
+  },
 
 };

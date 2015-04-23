@@ -9,10 +9,27 @@ collection-cache
 
 ## Getting Started
 
+This module is used to cache backend data.
+
+- It has a queueing system to prevent multiple requests for the same data.
+- Data is tracked per request parameters (ex. sort method, etc.)
+- Data is stored in a single array (items are updated everywhere, regardless of request parameters).
+
+It assumes data is stored as objects with ID keys.
+
 #### Create a new cache instance
 
 ```js
-var fruits = new CacheCollection();
+var fruits = new CollectionCache();
+```
+
+The following options can be passed in to the constructor (defaults shown):
+```js
+{
+  idKey: 'id',      // property that uniquely identifies object
+  skipKey: 'skip',  // parameter representing start of data set
+  limitKey: 'limit' // parameter representing amount of data stored
+}
 ```
 
 #### Assuming...
@@ -24,7 +41,7 @@ var queryParams = {
 };
 ```
 
-#### Querying and Updating
+#### Querying and Storing
 ```js
 var deferred = $.Deferred();
 
@@ -40,7 +57,6 @@ fruits.get(
       params: queryParams
     }).success(function(newFruits) {
       addToCache(newFruits);
-      deferred.resolve(newFruits);
     });
   }
 );
@@ -48,21 +64,22 @@ fruits.get(
 return deferred.promise;
 ```
 
-#### Synchronous Updates
+#### Find by ID
 ```js
-fruits.add(queryParams, ['apples', 'oranges']);
+var orange = fruits.show('orange');
+// => { id: 'orange', category: 'citrus' }
 ```
 
-#### Synchronous Retrievals
+#### Find by ID and Update
 ```js
-var cachedFruits = fruits.get(queryParams);
+fruits.update('orange', { category: 'berries' });
+// => { id: 'orange', category: 'berries' }
 ```
 
 #### Clear Cache
 ```js
 fruits.destroy();
 ```
-
 
 ## License
 Copyright (c) 2015 Marius Craciunoiu. Licensed under the MIT license.
