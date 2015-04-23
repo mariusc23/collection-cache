@@ -58,5 +58,11 @@ fruits.add(queryParams, ['apples', 'oranges']);
 var cachedFruits = fruits.get(queryParams);
 ```
 
+#### Clear Cache
+```js
+fruits.destroy();
+```
+
+
 ## License
 Copyright (c) 2015 Marius Craciunoiu. Licensed under the MIT license.

@@ -133,6 +133,16 @@
   };
 
   /**
+   * Clears cache.
+   *
+   * @memberof CollectionCache
+   */
+  CollectionCache.prototype.destroy = function() {
+    this.cache = {};
+    this.queue = {};
+  };
+
+  /**
    * Converts options to cache hash key.
    *
    * @param  {Object}  options  - Object to create hash from.
