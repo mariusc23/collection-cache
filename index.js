@@ -10,7 +10,7 @@
     module.exports = factory(require('lodash'), require('es6-promise').Promise);
   }
   else {
-    root.CollectionCache = factory(root._, root.ES6Promise);
+    root.CollectionCache = factory(root._, root.ES6Promise.Promise);
   }
 
 }(this, function (_, Promise) {
