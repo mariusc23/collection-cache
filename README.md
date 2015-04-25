@@ -64,6 +64,15 @@ fruits.get(
 return deferred.promise;
 ```
 
+#### List All
+```js
+fruits.list();
+// => [
+//      { id: 'orange', category: 'citrus' },
+//      { id: 'blueberry', category: 'berries' }
+//    ]
+```
+
 #### Find by ID
 ```js
 var orange = fruits.show('orange');
@@ -74,6 +83,11 @@ var orange = fruits.show('orange');
 ```js
 fruits.update('orange', { category: 'berries' });
 // => { id: 'orange', category: 'berries' }
+```
+
+#### Find by ID and Remove
+```js
+fruits.remove('orange');
 ```
 
 #### Clear Cache
