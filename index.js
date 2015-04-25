@@ -37,7 +37,7 @@
   }
 
   /**
-   * Gets items from cache.
+   * Gets requested items from cache.
    *
    * @param  {Object}    options        - Request options. Separate cache is used for each unique set of options.
    * @param  {Number}    options.skip   - Start index of requested data.
@@ -88,7 +88,7 @@
   };
 
   /**
-   * Gets all data from cache. Same as `.get()`, but returning all available data.
+   * Gets all request data from cache. Same as `.get()`, but returning all available data.
    *
    * @memberof CollectionCache
    */
@@ -132,6 +132,15 @@
     }
 
     return data;
+  };
+
+  /**
+   * Lists all unique items in the cache.
+   *
+   * @memberof CollectionCache
+   */
+  CollectionCache.prototype.list = function() {
+    return _.toArray(this.items);
   };
 
   /**
