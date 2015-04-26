@@ -51,16 +51,22 @@
     var cacheKey = getCacheKey.call(this, options),
         queueKey = getQueueKey(options),
         start = options[this.skipKey] || 0,
-        end = (options[this.skipKey] + options[this.limitKey]) || undefined;
+        end = (options[this.skipKey] + options[this.limitKey]) || undefined,
+        cacheArea = this.cache[cacheKey],
+        cachedItems = [];
 
     // Add synchronous support (must always be added first)
     if (!callback) {
       callback = fallbackCallback;
     }
 
+    if (cacheArea) {
+      cachedItems = cacheArea.slice(start, end);
+    }
+
     // Cached
-    if (this.cache[cacheKey]) {
-      return callback(undefined, this.cache[cacheKey].slice(start, end));
+    if (cacheArea && !end || cachedItems.length >= options[this.limitKey]) {
+      return callback(undefined, cachedItems);
     }
     // Not cached: first request
     else if (!this.queue[queueKey]) {
