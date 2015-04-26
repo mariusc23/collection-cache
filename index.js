@@ -134,7 +134,8 @@
     }
 
     for (i = 0; i < data.length; i++) {
-      this.cache[cacheKey][options[this.skipKey] + i] = this.items[data[i][this.idKey]] = data[i];
+      this.update(data[i][this.idKey], data[i]);
+      this.cache[cacheKey][options[this.skipKey] + i] = this.items[data[i][this.idKey]];
     }
 
     return data;
@@ -168,12 +169,7 @@
    */
   CollectionCache.prototype.update = function(id, data) {
     // TODO: emit events?
-    if (Array.isArray(data)) {
-      this.items[id] = data;
-    }
-    else {
-      this.items[id] = _.extend(this.items[id] || {}, data);
-    }
+    this.items[id] = _.extend(this.items[id] || {}, data);
     return this.items[id];
   };
 
