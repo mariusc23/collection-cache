@@ -68,7 +68,7 @@
     if (cacheArea && !end || cachedItems.length >= options[this.limitKey]) {
       return callback(undefined, cachedItems);
     }
-    // Not cached: first request
+    // Not cached: first uncached request
     else if (!this.queue[queueKey]) {
       if (!getter) {
         return callback(new Error('Data not in cache and missing getter function.'));
@@ -82,7 +82,7 @@
         this.add(options, data);
       }.bind(this));
     }
-    // Not cached: first and subsequent response
+    // Not cached: first and subsequent uncached requests
     this.queue[queueKey]
       .then(function(/* data */) {
         callback(undefined, this.cache[cacheKey].slice(start, end));
